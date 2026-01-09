@@ -1,0 +1,51 @@
+.liste-kutusu {
+    height: 100%;
+    max-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.liste-kutusu * {
+    border-radius: 15px;
+    margin: 2px;
+}
+
+.liste-kutusu .arama-cubugu {
+    width: 100%;
+    padding: 5px;
+    text-align: center;
+}
+
+.liste-kutusu button {
+    min-width: fit-content;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.liste-kutusu .yeni-eleman-girisi {
+    display: flex;
+}
+
+.liste-kutusu .liste {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.liste-kutusu .liste div {
+    padding: 5px;
+    cursor: pointer;
+}
+
+.liste-kutusu .liste div.secildi {
+    border-style: solid;
+    border-color: green;
+}
+
+.liste-kutusu .liste div.Gizli {
+    text-decoration: line-through;
+}
+
+.liste-kutusu .liste div.Sabit {
+    background: linear-gradient(to left, rgb(169, 147, 61) 0%, transparent 100%);
+
+}
