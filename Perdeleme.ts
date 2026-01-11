@@ -2,6 +2,7 @@ export class Perde {
     private static element: HTMLDivElement | null = null;
     private static bar: HTMLDivElement | null = null;
     private static mesajEl: HTMLDivElement | null = null;
+    private static Sayac_Acildi = 0;
 
     private static StilEkle() {
         if (document.getElementById("perde-stil")) return;
@@ -10,9 +11,19 @@ export class Perde {
         style.innerHTML = `
             .perde-container {
                 position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-                background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(3px);
+                background: rgba(128, 128, 128, 0.5); backdrop-filter: blur(2px);
                 display: none; flex-direction: column; justify-content: center;
                 align-items: center; z-index: 999999; font-family: 'Segoe UI', Tahoma, sans-serif;
+                opacity: 0; transition: opacity 0.5s ease, display 0.5s ease allow-discrete; 
+            }
+            .perde-container.acik {
+                display: flex; 
+                opacity: 1;
+            }
+            @starting-style {
+                .perde-container.acik {
+                    opacity: 0;
+                }
             }
             .progress-box {
                 width: 60%; max-width: 400px; height: 12px;
@@ -44,20 +55,26 @@ export class Perde {
             this.bar = this.element.querySelector("#p-bar");
             this.mesajEl = this.element.querySelector("#p-mesaj");
         }
-        
+
         if (this.mesajEl) this.mesajEl.textContent = ilkMesaj;
         if (this.bar) this.bar.style.width = "0%";
-        
-        this.element.style.display = "flex";
+
+        this.element.classList.add('acik');
+        this.Sayac_Acildi++;
     }
 
-    public static Yenile(Asama:number, ToplamAsamaSayisi:number, mesaj: string = 'Bekleyiniz') {
-        const yuzde = Asama / ToplamAsamaSayisi * 100; 
+    public static Yenile(Asama: number, ToplamAsamaSayisi: number, mesaj: string = 'Bekleyiniz') {
+        const yuzde = Asama / ToplamAsamaSayisi * 100;
         if (this.bar) this.bar.style.width = `${yuzde}%`;
         if (mesaj && this.mesajEl) this.mesajEl.textContent = mesaj;
     }
 
-    public static Kapat() {
-        if (this.element) this.element.style.display = "none";
+    public static Kapat(MutlakaKapat = false) {
+        if (MutlakaKapat) this.Sayac_Acildi = 1;
+
+        if (this.Sayac_Acildi > 0) {
+            this.Sayac_Acildi--;
+            if (this.Sayac_Acildi === 0 && this.element) this.element.classList.remove('acik');
+        }
     }
 }

@@ -34,9 +34,4 @@ export class Yazi {
     public static Nesneden(nesne: any): string {
         return JSON.stringify(nesne);
     }
-
-    public static Simdi_UTC(Ekle_msn: number = 0): string {
-        const trh = Date.now() + Ekle_msn;
-        return new Date(trh).toISOString().slice(0, -1); //Z iptal
-    }
 }

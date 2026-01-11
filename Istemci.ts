@@ -5,9 +5,10 @@ export class Istemci {
     public static async GonderAl(
         Metod: "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
         Adres: string,
-        JsonVeyaForm: any = null,
-        Firma: string | null = null
-    ): Promise<[boolean, any?]> {
+        JsonVeyaForm?: any,
+        EklenecekBasliklar?: { [key: string]: string },
+        OkunacakBasliklar?: string[]
+    ): Promise<[boolean, any?, { [key: string]: string }?]> {
         const encodedUrl = Adres.split('/').map(encodeURIComponent).join('/');
 
         const headers: Record<string, string> = {
@@ -18,26 +19,29 @@ export class Istemci {
             headers,
             credentials: 'include',
             method: Metod,
-            cache: 'no-store'
+            cache: 'no-store',
+            redirect: 'manual'
         };
 
-        if (Metod !== "GET" && JsonVeyaForm !== null) {
+        if (Metod !== "GET" && JsonVeyaForm) {
             if (JsonVeyaForm instanceof FormData) {
                 options.body = JsonVeyaForm;
             } else {
                 headers['Content-Type'] = 'application/json';
-                this.Temizle(JsonVeyaForm);
                 options.body = JSON.stringify(JsonVeyaForm);
             }
         }
 
-        if (Firma !== null) headers['Firma'] = Firma;
+        if (EklenecekBasliklar) {
+            for (const key in EklenecekBasliklar) {
+                headers[key] = EklenecekBasliklar[key];
+            }
+        }
 
-        // Retry mantığı (3 deneme)
         for (let i = 0; i < 3; i++) {
             try {
                 const response = await fetch(encodedUrl, options);
-                let jsn: any = null;
+                let jsn: any = undefined;
                 const r_ok = response.ok;
 
                 if (r_ok) {
@@ -51,25 +55,23 @@ export class Istemci {
                         }
                     }
                 }
-
-                // Header kontrolleri
-                const win = (window.top as any);
-                const ynlr = response.headers.get("Yonlendir");
-                if (ynlr) win.location.href = ynlr;
-
-                let blg = response.headers.get("Bilgi");
-                if (blg) {
-                    let mesaj = decodeURIComponent(blg);
-                    if (!r_ok) mesaj += "\nİşlem tamamlanamadı, tekrar deneyiniz";
-
-                    if (typeof win.Uyari === "function") {
-                        win.Uyari(mesaj, !r_ok);
-                    } else {
-                        alert(mesaj);
-                    }
+                else if (response.status >= 500){
+                    throw new Error(); //sunucu kaynaklı
                 }
 
-                return [r_ok, jsn];
+                let OkunmusBasliklar: { [key: string]: string } | undefined = undefined;
+                if (OkunacakBasliklar && OkunacakBasliklar.length > 0) {
+                    OkunmusBasliklar = {};
+                    OkunacakBasliklar.forEach(key => {
+                        const icr = response.headers.get(key);
+                        if (icr) {
+                            OkunmusBasliklar![key] = decodeURIComponent(icr);
+                        }
+                    });
+                    if (Object.keys(OkunmusBasliklar).length === 0) OkunmusBasliklar = undefined;
+                }
+
+                return [r_ok, jsn, OkunmusBasliklar];
 
             } catch (error) {
                 console.error(`Deneme ${i + 1} başarısız:`, error);
@@ -80,20 +82,6 @@ export class Istemci {
 
         alert("İşlem tamamlanamadı, tekrar deneyiniz");
         return [false];
-    }
-
-    private static Temizle(jsn: any): void {
-        if (jsn !== null && typeof jsn === 'object') {
-            for (const key in jsn) {
-                if (Object.prototype.hasOwnProperty.call(jsn, key)) {
-                    if (/^__.*__$/.test(key)) {
-                        delete jsn[key];
-                    } else {
-                        this.Temizle(jsn[key]);
-                    }
-                }
-            }
-        }
     }
 
     private static _Parmak_izi: string = "";

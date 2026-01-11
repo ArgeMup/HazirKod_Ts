@@ -1,4 +1,5 @@
 import { Perde } from "./Perdeleme";
+import { MesajPanosu_ } from './MesajPanosu'
 
 export enum IslemTipi_ {
     Sec_Oncesinde = 1,                  //Mevcut Öge,   YeniSecimSonucu
@@ -21,9 +22,6 @@ export interface IListeOgesi_ {
     Gizli?: boolean;
     Sabit?: boolean;
     __Golgesi__?: string;
-
-    //Firma
-    tar_ab?: Date;
 }
 
 interface IListeKutusuPrm {
@@ -35,10 +33,12 @@ interface IListeKutusuPrm {
     DegisiklikKontroluYapilacakEleman: HTMLElement | Document;
 }
 
+/** private GeriBildirimIslemi = async (IslemTipi: IslemTipi_, Oge: IListeOgesi_, Nesne: any) => {} */
 export class ListeKutusu_ {
     private liste: IListeOgesi_[] = [];
     private seciliOgeAdlari: Set<string> = new Set();
     private prm: IListeKutusuPrm;
+    private MesajPanosu!: MesajPanosu_;
 
     // UI Elemanları
     private listeDiv!: HTMLDivElement;
@@ -71,6 +71,7 @@ export class ListeKutusu_ {
             DegisiklikKontroluYapilacakEleman: DegisiklikKontroluYapilacakEleman || document
         };
 
+        this.MesajPanosu = (window.top as any).MePa as MesajPanosu_;
         this.InitUI();
         this.Guncelle(Elemanlar, Eklenebilir, Degistirilebilir, Silinebilir, GizliOlanlariGoster, BircokElemanSecilebilir, DegisiklikKontroluYapilacakEleman);
     }
@@ -139,21 +140,22 @@ export class ListeKutusu_ {
         if (!this.checkChanges()) return;
 
         this.yeniElemanInput.value = oge.Ad;
+        const mevcut = this.seciliOgeAdlari.has(oge.Ad);
 
-        if (this.seciliOgeAdlari.has(oge.Ad)) {
-            if (await this.GeriBildirimIslemi(IslemTipi_.Sec_Oncesinde, oge, false) === false) return;
+        if (await this.GeriBildirimIslemi(IslemTipi_.Sec_Oncesinde, oge, !mevcut) === false) return;
+
+        if (mevcut) {
             this.seciliOgeAdlari.delete(oge.Ad);
-            await this.GeriBildirimIslemi(IslemTipi_.Sec_Sonrasinda, oge, false);
         } else {
-            if (await this.GeriBildirimIslemi(IslemTipi_.Sec_Oncesinde, oge, true) === false) return;
             if (!ctrlKey || !this.prm.BircokElemanSecilebilir) {
                 this.seciliOgeAdlari.clear();
             }
             this.seciliOgeAdlari.add(oge.Ad);
-            await this.GeriBildirimIslemi(IslemTipi_.Sec_Sonrasinda, oge, true);
         }
 
         this.listeYenile(false);
+
+        await this.GeriBildirimIslemi(IslemTipi_.Sec_Sonrasinda, oge, !mevcut);
     }
 
     private listeYenile(sirala: boolean = false): void {
@@ -161,7 +163,7 @@ export class ListeKutusu_ {
 
         const aramaMetni = this.aramaInput.value.trim().toLowerCase();
         const arananKelimeler = aramaMetni.split(/\s+/);
-        
+
         const filtrelenmisListe = this.liste.filter(oge =>
             arananKelimeler.every(aranan => oge.Ad?.toLowerCase().includes(aranan) ?? false)
         );
@@ -173,13 +175,13 @@ export class ListeKutusu_ {
             if (oge.Gizli) ogeDiv.classList.add("Gizli");
             if (oge.Sabit) ogeDiv.classList.add("Sabit");
             if (this.seciliOgeAdlari.has(oge.Ad)) ogeDiv.classList.add("secildi");
-            
+
             ogeDiv.onclick = (e) => this.secildi(oge, e.ctrlKey);
             this.listeDiv.appendChild(ogeDiv);
         });
 
         this.TuslariDuzenle();
-        
+
         const klsyn = this.prm.DegisiklikKontroluYapilacakEleman.getElementsByClassName("degisti");
         for (let i = klsyn.length - 1; i >= 0; i--) {
             klsyn[i].classList.remove('degisti');
@@ -195,9 +197,9 @@ export class ListeKutusu_ {
         this.ekleButton.style.display = varmi || !this.prm.Eklenebilir ? "none" : "block";
 
         if (this.seciliOgeAdlari.size === 1 && seciliOge) {
-            this.degistirButton.style.display = (this.prm.Degistirilebilir && !seciliOge.Sabit) ? "block" : "none";
+            this.degistirButton.style.display = (this.prm.Degistirilebilir && !seciliOge.Sabit && !varmi) ? "block" : "none";
             this.silButton.style.display = (this.prm.Silinebilir && !seciliOge.Sabit) ? "block" : "none";
-            
+
             if (this.prm.Degistirilebilir && this.prm.GizliOlanlariGoster) {
                 this.gizleGosterButton.textContent = seciliOge.Gizli ? "Göster" : "Gizle";
                 this.gizleGosterButton.style.display = "block";
@@ -211,21 +213,26 @@ export class ListeKutusu_ {
         }
     }
 
-    public async ekle(): Promise<void> {
+    private Uyari(Mesaj: string): void {
+        if (this.MesajPanosu !== undefined) this.MesajPanosu.YeniMesaj({ Mesaj, Tipi: 'Uyari' });
+        else alert(Mesaj);
+    }
+
+    private async ekle(): Promise<void> {
         const yeniOgeAdi = this.yeniElemanInput.value.trim();
         if (!yeniOgeAdi) {
-            (window.top as any).Uyari?.("Lütfen geçerli bir öğe adı girin.");
+            this.Uyari("Lütfen geçerli bir öğe adı girin.");
             return;
         }
         if (this.liste.some(o => o.Ad === yeniOgeAdi)) {
-            (window.top as any).Uyari?.("Bu öğe zaten listede var.");
+            this.Uyari("Bu öğe zaten listede var.");
             return;
         }
         if (!this.checkChanges()) return;
 
         Perde.Ac();
         const yeniOge: IListeOgesi_ = { Ad: yeniOgeAdi };
-        
+
         if (await this.GeriBildirimIslemi(IslemTipi_.Ekle_Oncesinde, yeniOge, yeniOgeAdi) === false) return;
 
         this.liste.push(yeniOge);
@@ -237,21 +244,21 @@ export class ListeKutusu_ {
         this.listeYenile(true);
     }
 
-    public async adiDegistir(): Promise<void> {
+    private async adiDegistir(): Promise<void> {
         if (this.seciliOgeAdlari.size !== 1) {
-            (window.top as any).Uyari?.("Lütfen tek bir öğe seçin.");
+            this.Uyari("Lütfen tek bir öğe seçin.");
             return;
         }
 
         const oge = this.liste.find(o => o.Ad === [...this.seciliOgeAdlari][0]);
         if (!oge || oge.Sabit) {
-            (window.top as any).Uyari?.("Seçilen öge üzerinde işlem yapılamamaktadır.");
+            this.Uyari("Seçilen öge üzerinde işlem yapılamamaktadır.");
             return;
         }
 
         if (!this.checkChanges()) return;
 
-        const yeniOgeAdi = prompt("Yeni Ad:", oge.Ad);
+        const yeniOgeAdi = this.yeniElemanInput.value;// prompt("Yeni Ad:", oge.Ad);
         if (yeniOgeAdi && yeniOgeAdi !== oge.Ad) {
             if (confirm(`Eski Ad: ${oge.Ad}\nYeni Ad: ${yeniOgeAdi}\n\nEmin misiniz?`)) {
                 Perde.Ac();
@@ -267,9 +274,9 @@ export class ListeKutusu_ {
         }
     }
 
-    public async gizleGoster(): Promise<void> {
+    private async gizleGoster(): Promise<void> {
         if (this.seciliOgeAdlari.size !== 1) {
-            (window.top as any).Uyari?.("Lütfen bir öğe seçin.");
+            this.Uyari("Lütfen bir öğe seçin.");
             return;
         }
         if (!this.checkChanges()) return;
@@ -285,15 +292,15 @@ export class ListeKutusu_ {
         this.listeYenile();
     }
 
-    public async sil(): Promise<void> {
+    private async sil(): Promise<void> {
         if (this.seciliOgeAdlari.size !== 1) {
-            (window.top as any).Uyari?.("Lütfen tek bir öğe seçin.");
+            this.Uyari("Lütfen tek bir öğe seçin.");
             return;
         }
 
         const oge = this.liste.find(o => o.Ad === [...this.seciliOgeAdlari][0]);
         if (!oge || oge.Sabit) {
-            (window.top as any).Uyari?.("Seçilen öge üzerinde işlem yapılamamaktadır.");
+            this.Uyari("Seçilen öge üzerinde işlem yapılamamaktadır.");
             return;
         }
 
@@ -345,6 +352,22 @@ export class ListeKutusu_ {
         this.listeYenile(true);
     }
 
+    public Tazele(): void { this.listeYenile(true); }
+
+    public Sec(Girdi_Ad: string | string[] | null): void {
+        this.seciliOgeAdlari.clear(); //null
+
+        if (Array.isArray(Girdi_Ad)) {
+            if (Girdi_Ad.length > 1 && !this.prm.BircokElemanSecilebilir) throw new Error();
+            this.seciliOgeAdlari = new Set(Girdi_Ad);
+        }
+        else if (typeof Girdi_Ad === 'string') {
+            this.seciliOgeAdlari.add(Girdi_Ad);
+        }
+
+        this.listeYenile(false);
+    }
+
     // Getters
     public get TumElemanlar(): IListeOgesi_[] { return this.liste; }
     public get SecilenEleman(): IListeOgesi_ | null {
@@ -358,6 +381,5 @@ export class ListeKutusu_ {
         return Array.from(this.seciliOgeAdlari).map(ad => this.liste.find(o => o.Ad === ad)!).filter(Boolean);
     }
     public get AramaCubuguIcerigi(): string { return this.aramaInput.value; }
-
-    public Tazele(): void { this.listeYenile(true); }
+    public set AramaCubuguIcerigi(YeniDeger: string) { this.aramaInput.value = YeniDeger; this.listeYenile(); }
 }
