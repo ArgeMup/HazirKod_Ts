@@ -105,7 +105,7 @@ export class D_Sayi {
         }).format(Girdi);
     }
 
-    public static UygunMu(Girdi: any, Aralik_Dusuk?:number, Aralik_Yuksek?:number, TamSayiOlmali?: boolean): boolean {
+    public static UygunMu(Girdi: any, Aralik_Dusuk?: number, Aralik_Yuksek?: number, TamSayiOlmali?: boolean): boolean {
         const sayi = Number(Girdi);
 
         if (isNaN(sayi) ||
@@ -120,5 +120,12 @@ export class D_Sayi {
         }
 
         return true;
+    }
+}
+
+export class D_Nesne {
+    public static BagimsizKopya<T>(Girdi: T): T {
+        if (Girdi === undefined || Girdi === null) return Girdi;
+        return structuredClone(Girdi);
     }
 }

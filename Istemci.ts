@@ -1,6 +1,21 @@
 import { Yazi } from './Yazi'
 import { BaytDizisi } from './BaytDizisi'
 
+export enum Istemci_CevapTipi_{
+    Yok,
+    json,
+    Yazi,
+    BaytDizisi
+};
+
+export interface Istemci_IslemSonucu_ {
+    Basarili: boolean;
+    Cevap_Kodu: number;
+    Cevap_Tipi: Istemci_CevapTipi_; 
+    Cevap?: any;
+    OkunmusBasliklar?: { [key: string]: string };
+}
+
 export class Istemci {
     public static async GonderAl(
         Metod: "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
@@ -8,7 +23,7 @@ export class Istemci {
         JsonVeyaForm?: any,
         EklenecekBasliklar?: { [key: string]: string },
         OkunacakBasliklar?: string[]
-    ): Promise<[boolean, any?, { [key: string]: string }?]> {
+    ): Promise<Istemci_IslemSonucu_> {
         const encodedUrl = Adres.split('/').map(encodeURIComponent).join('/');
 
         const headers: Record<string, string> = {
@@ -41,38 +56,39 @@ export class Istemci {
         for (let i = 0; i < 3; i++) {
             try {
                 const response = await fetch(encodedUrl, options);
-                let jsn: any = undefined;
-                const r_ok = response.ok;
+                const IslemSonucu: Istemci_IslemSonucu_ = { Basarili: response.ok, Cevap_Kodu: response.status, Cevap_Tipi: Istemci_CevapTipi_.Yok };
 
-                if (r_ok) {
+                if (IslemSonucu.Basarili) {
                     const contentType = response.headers.get("content-type");
                     if (contentType) {
                         if (contentType.includes("application/json")) {
-                            jsn = await response.json();
+                            IslemSonucu.Cevap = await response.json();
+                            IslemSonucu.Cevap_Tipi = Istemci_CevapTipi_.json;
+                        } else if (contentType.includes("text/") || contentType.includes("/xml")) {
+                            IslemSonucu.Cevap = await response.text();
+                            IslemSonucu.Cevap_Tipi = Istemci_CevapTipi_.Yazi;
                         } else {
-                            const textData = await response.text();
-                            jsn = { __Gelen__: textData };
+                            IslemSonucu.Cevap = new Uint8Array(await response.arrayBuffer());
+                            IslemSonucu.Cevap_Tipi = Istemci_CevapTipi_.BaytDizisi;
                         }
                     }
                 }
-                else if (response.status >= 500){
+                else if (response.status >= 500) {
                     throw new Error(); //sunucu kaynaklı
                 }
 
-                let OkunmusBasliklar: { [key: string]: string } | undefined = undefined;
                 if (OkunacakBasliklar && OkunacakBasliklar.length > 0) {
-                    OkunmusBasliklar = {};
+                    IslemSonucu.OkunmusBasliklar = {};
                     OkunacakBasliklar.forEach(key => {
                         const icr = response.headers.get(key);
                         if (icr) {
-                            OkunmusBasliklar![key] = decodeURIComponent(icr);
+                            IslemSonucu.OkunmusBasliklar![key] = decodeURIComponent(icr);
                         }
                     });
-                    if (Object.keys(OkunmusBasliklar).length === 0) OkunmusBasliklar = undefined;
+                    if (Object.keys(IslemSonucu.OkunmusBasliklar).length === 0) IslemSonucu.OkunmusBasliklar = undefined;
                 }
 
-                return [r_ok, jsn, OkunmusBasliklar];
-
+                return IslemSonucu;
             } catch (error) {
                 console.error(`Deneme ${i + 1} başarısız:`, error);
             }
@@ -81,7 +97,7 @@ export class Istemci {
         }
 
         alert("İşlem tamamlanamadı, tekrar deneyiniz");
-        return [false];
+        return { Basarili: false, Cevap_Kodu: 9999, Cevap_Tipi: Istemci_CevapTipi_.Yok } as const;
     }
 
     private static _Parmak_izi: string = "";

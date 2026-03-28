@@ -55,8 +55,4 @@ export class Json {
 
         return sonuc;
     }
-    
-    public static BagimsizKopya<T>(json: T): T {
-        return JSON.parse(JSON.stringify(json));
-    }
 }
