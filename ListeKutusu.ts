@@ -161,11 +161,11 @@ export class ListeKutusu_ {
     private listeYenile(sirala: boolean = false): void {
         if (sirala) this.liste.sort((a, b) => a.Ad?.localeCompare(b.Ad));
 
-        const aramaMetni = this.aramaInput.value.trim().toLowerCase();
+        const aramaMetni = this.aramaInput.value.trim().toLocaleLowerCase();
         const arananKelimeler = aramaMetni.split(/\s+/);
 
         const filtrelenmisListe = this.liste.filter(oge =>
-            arananKelimeler.every(aranan => oge.Ad?.toLowerCase().includes(aranan) ?? false)
+            arananKelimeler.every(aranan => oge.Ad?.toLocaleLowerCase().includes(aranan) ?? false)
         );
 
         this.listeDiv.innerHTML = "";
