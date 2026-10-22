@@ -141,6 +141,29 @@ export class OnYuz {
             (el as HTMLElement).classList.remove('degisti');
         });
     }
+
+    public static IcinYazi(Girdi: unknown): string {
+        if (Girdi === null || Girdi === undefined) return '';
+        return String(Girdi).replace(/[\\%&<:='";]/g, '?');
+    }
+
+    /**
+        function Ara(Sorgu: string) {
+            console.log("Aranıyor :", Sorgu);
+        }
+
+        const ErtelenmisArama = ErteleyerekCalistir(Ara, 500);
+        ErtelenmisArama("a"); // 500 ms sonra "Aranıyor : a" yazdırır.
+        ErtelenmisArama("ab"); // Önceki çağrıyı iptal eder ve 500 ms sonra "Aranıyor : ab" yazdır
+    */
+    public static ErteleyerekCalistir<T extends (...args: any[]) => any>(fn: T, delay: number): (...args: Parameters<T>) => void {
+        let timeoutId: ReturnType<typeof setTimeout>;
+
+        return (...args: Parameters<T>) => {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => fn(...args), delay);
+        };
+    }
 }
 
 /**

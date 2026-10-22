@@ -43,11 +43,11 @@ export class Yazi {
         if (kıstas.length === 1 && kıstas[0] === ayraç) return true;
 
         const karşılaştır = (a: string, b: string): boolean =>
-            büyükKüçükHarfDuyarlı ? a === b : a.toLocaleLowerCase() === b.toLocaleLowerCase();
+            büyükKüçükHarfDuyarlı ? a === b : a.toLocaleLowerCase('tr-TR') === b.toLocaleLowerCase('tr-TR');
 
         const içeriyorMu = (kaynak: string, aranan: string, baştan: number): number => {
             if (!büyükKüçükHarfDuyarlı) {
-                return kaynak.toLocaleLowerCase().indexOf(aranan.toLocaleLowerCase(), baştan);
+                return kaynak.toLocaleLowerCase('tr-TR').indexOf(aranan.toLocaleLowerCase('tr-TR'), baştan);
             }
             return kaynak.indexOf(aranan, baştan);
         };

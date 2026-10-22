@@ -13,7 +13,7 @@ export class Perde {
                 position: fixed; top: 0; left: 0; width: 100%; height: 100%;
                 background: rgba(128, 128, 128, 0.5); backdrop-filter: blur(2px);
                 display: none; flex-direction: column; justify-content: center;
-                align-items: center; z-index: 999999; font-family: 'Segoe UI', Tahoma, sans-serif;
+                align-items: center; z-index: 9998; font-family: 'Segoe UI', Tahoma, sans-serif;
                 opacity: 0; transition: opacity 0.5s ease, display 0.5s ease allow-discrete; 
             }
             .perde-container.acik {

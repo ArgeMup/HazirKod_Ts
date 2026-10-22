@@ -221,16 +221,25 @@ export class MesajPanosu_ {
         const baslik = this.Al_Baslik(Ayarlar.Tipi, Ayarlar.Baslik);
 
         msg_div.innerHTML = `
-      <div class="MesajPanosu_Baslik">
-        <div class="MesajPanosu_Baslik_Icerik">
-          <div class="MesajPanosu_ikon">${iko}</div>
-          <strong class="MesajPanosu_Baslik_Aciklama">${baslik}</strong>
-        </div>
-        <small class="MesajPanosu_Saat">${simdi}</small>
-        <button type="button" class="MesajPanosu_Kapat" aria-label="Kapat">×</button>
-      </div>
-      <div class="MesajPanosu_Iskelet">${Ayarlar.Mesaj}</div>
-    `;
+  <div class="MesajPanosu_Baslik">
+    <div class="MesajPanosu_Baslik_Icerik">
+      <div class="MesajPanosu_ikon"></div>
+      <strong class="MesajPanosu_Baslik_Aciklama"></strong>
+    </div>
+    <small class="MesajPanosu_Saat"></small>
+    <button type="button" class="MesajPanosu_Kapat" aria-label="Kapat">×</button>
+  </div>
+`;
+        msg_div.querySelector<HTMLElement>('.MesajPanosu_ikon')!.textContent = iko;
+        msg_div.querySelector<HTMLElement>('.MesajPanosu_Saat')!.textContent = simdi;
+
+        const _msgb = msg_div.querySelector('.MesajPanosu_Baslik_Aciklama') as HTMLElement;
+        _msgb.textContent = baslik;
+
+        const _msjp = document.createElement('div');
+        _msjp.className = 'MesajPanosu_Iskelet';
+        _msjp.textContent = Ayarlar.Mesaj;
+        msg_div.append(_msjp);
 
         const closeBtn = msg_div.querySelector('.MesajPanosu_Kapat') as HTMLElement;
         closeBtn.addEventListener('click', () => this.Msg_Sil(msg_div));

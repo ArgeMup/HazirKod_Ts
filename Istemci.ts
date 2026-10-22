@@ -110,6 +110,7 @@ export class Istemci {
             `${(screen as any).deviceXDPI}x${(screen as any).deviceYDPI}`;
 
         cikti += ` ${Intl.DateTimeFormat().resolvedOptions().timeZone} ${navigator.language}`;
+        cikti += window.location.origin + '_-_BuSite.Surum-_-';
 
         // Canvas çizimi ile cihazın render kapasitesini ölç (Fingerprinting)
         const canvas = document.createElement('canvas');
@@ -169,9 +170,9 @@ export class Istemci {
         ctx.textBaseline = "top";
         ctx.font = "15px 'Arial'";
         ctx.fillText("ArGeMuP tedavitakip.com", 5, 5);
-        ctx.fillText("ArGeMuP tedavitakip.com", 41, 48);
+        ctx.fillText("window.location.origin", 41, 48);
         ctx.fillText("ArGeMuP tedavitakip.com", 77, 91);
-        ctx.fillText("ArGeMuP tedavitakip.com", 113, 134);
+        ctx.fillText("_-_BuSite.Surum-_-", 113, 134);
         ctx.fillText("ArGeMuP tedavitakip.com", 150, 177);
 
         // Veriyi string'e çevir ve hash'le
